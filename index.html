@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0" />
-<meta http-equiv="cache" content="no-cache" />
-<meta http-equiv="expires" content="0" />
+<meta http-serif="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0" />
+<meta http-serif="cache" content="no-cache" />
+<meta http-serif="expires" content="0" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -246,6 +246,28 @@
   }
   .stat-num { font-size: 24px; font-weight: 800; color: var(--accent2); }
   .stat-lbl { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+
+  /* ── Water layer radio buttons ── */
+  .layer-group {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  }
+  .layer-option { position: relative; }
+  .layer-option input[type="radio"] {
+    position: absolute; opacity: 0; width: 0; height: 0;
+  }
+  .layer-btn {
+    display: block; text-align: center;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 12px 6px;
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    cursor: pointer; transition: all .15s;
+    line-height: 1.4;
+  }
+  .layer-option input[type="radio"]:checked + .layer-btn {
+    background: rgba(76,175,80,.15);
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
 </style>
 </head>
 <body>
@@ -320,12 +342,41 @@
 
   <div class="field-group">
     <label>🎣 Methode</label>
-    <input type="text" id="f-method" placeholder="z.B. Jiggen, Dropshot, Wobbler …" list="method-list">
-    <datalist id="method-list">
-      <option value="Jiggen"><option value="Dropshot"><option value="Wobbler">
-      <option value="Spinnfischen"><option value="Popper"><option value="Grundangeln">
-      <option value="Posenfischen"><option value="Fliegenfischen">
-    </datalist>
+    <select id="f-method">
+      <option value="">— auswählen —</option>
+      <option>Jiggen</option>
+      <option>Faulenzen</option>
+      <option>Twitchen</option>
+      <option>Normales durchleiern</option>
+      <option>Schnelles durchleiern</option>
+      <option>Langsames durchleiern</option>
+      <option>Drop Shot</option>
+      <option>Carolina Rig</option>
+      <option>Texas Rig</option>
+      <option>Ned Rig</option>
+      <option>Cheburashka</option>
+      <option>Vertikalangeln</option>
+      <option>Schleppangeln</option>
+      <option>Ansitzangeln</option>
+    </select>
+  </div>
+
+  <div class="field-group">
+    <label>🌊 Bisstiefe / Wasserschicht <span style="color:var(--danger);font-weight:700;">*</span></label>
+    <div class="layer-group">
+      <label class="layer-option">
+        <input type="radio" name="f-layer" value="Grund">
+        <span class="layer-btn">⬇️ Grund</span>
+      </label>
+      <label class="layer-option">
+        <input type="radio" name="f-layer" value="Mittelwasser">
+        <span class="layer-btn">↕️ Mittelwasser</span>
+      </label>
+      <label class="layer-option">
+        <input type="radio" name="f-layer" value="Topwater">
+        <span class="layer-btn">⬆️ Topwater (Oberfläche)</span>
+      </label>
+    </div>
   </div>
 
   <button class="btn btn-primary" onclick="saveCatch()">✅ Fang speichern</button>
@@ -470,16 +521,20 @@ function saveCatch() {
   const weather = document.getElementById('f-weather').value;
   const size    = document.getElementById('f-size').value.trim();
   const bait    = document.getElementById('f-bait').value.trim();
-  const method  = document.getElementById('f-method').value.trim();
+  const method  = document.getElementById('f-method').value;
+  const layerEl = document.querySelector('input[name="f-layer"]:checked');
+  const layer   = layerEl ? layerEl.value : '';
 
-  if (!fish || !water || !date) {
-    showToast('⚠️ Bitte Fischart, Gewässer & Datum angeben');
+  if (!fish || !water || !date || !layer) {
+    showToast('⚠️ Bitte Fischart, Gewässer, Datum & Wasserschicht angeben');
     return;
   }
   const catches = loadCatches();
-  catches.unshift({ id: Date.now(), fish, water, date, temp, weather, size, bait, method });
+  catches.unshift({ id: Date.now(), fish, water, date, temp, weather, size, bait, method, layer });
   saveCatches(catches);
-  ['f-fish','f-water','f-temp','f-size','f-bait','f-method'].forEach(id => document.getElementById(id).value = '');
+  ['f-fish','f-water','f-temp','f-size','f-bait'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-method').value = '';
+  document.querySelectorAll('input[name="f-layer"]').forEach(r => r.checked = false);
   document.getElementById('f-weather').value = '';
   fillLogSuggestions();
   showToast('🐟 Fang gespeichert!');
@@ -605,7 +660,7 @@ function runAdvisor() {
         <div class="meta-grid">
           ${c.water  ? `<div class="meta-item"><div class="meta-label">Gewässer</div><div class="meta-value">📍 ${esc(c.water)}</div></div>` : ''}
           ${c.bait   ? `<div class="meta-item"><div class="meta-label">Köder</div><div class="meta-value">🪱 ${esc(c.bait)}</div></div>` : ''}
-          ${c.method ? `<div class="meta-item"><div class="meta-label">Methode</div><div class="meta-value">🎣 ${esc(c.method)}</div></div>` : ''}
+          ${(c.method||c.layer) ? `<div class="meta-item"><div class="meta-label">Methode</div><div class="meta-value">🎣 ${esc(c.method||'—')}${c.layer ? ' ('+esc(c.layer)+')' : ''}</div></div>` : ''}
           ${c.weather? `<div class="meta-item"><div class="meta-label">Wetter</div><div class="meta-value">${esc(c.weather)}</div></div>` : ''}
           ${c.temp   ? `<div class="meta-item"><div class="meta-label">Temperatur</div><div class="meta-value">🌡️ ${esc(c.temp)} °C</div></div>` : ''}
           ${c.size   ? `<div class="meta-item"><div class="meta-label">Länge</div><div class="meta-value">📏 ${esc(c.size)} cm</div></div>` : ''}
@@ -647,7 +702,7 @@ function renderList() {
         ${c.temp    ? `<div class="meta-item"><div class="meta-label">Temperatur</div><div class="meta-value">🌡️ ${esc(c.temp)} °C</div></div>` : ''}
         ${c.size    ? `<div class="meta-item"><div class="meta-label">Länge</div><div class="meta-value">📏 ${esc(c.size)} cm</div></div>` : ''}
         ${c.bait    ? `<div class="meta-item"><div class="meta-label">Köder</div><div class="meta-value">🪱 ${esc(c.bait)}</div></div>` : ''}
-        ${c.method  ? `<div class="meta-item"><div class="meta-label">Methode</div><div class="meta-value">🎣 ${esc(c.method)}</div></div>` : ''}
+        ${(c.method||c.layer) ? `<div class="meta-item"><div class="meta-label">Methode</div><div class="meta-value">🎣 ${esc(c.method||'—')}${c.layer ? ' ('+esc(c.layer)+')' : ''}</div></div>` : ''}
       </div>
     </div>`).join('');
 }
