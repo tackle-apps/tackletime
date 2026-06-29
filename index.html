@@ -369,9 +369,18 @@
   </div>
 
   <div class="field-group">
-    <label>🌤️ Wetter <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-    <input type="text" id="a-weather" placeholder="z.B. Sonnig …">
-  </div>
+  <label>🌤️ Wetter <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+  <select id="a-weather">
+    <option value="">Wetter auswählen...</option>
+    <option value="Sonnig">Sonnig</option>
+    <option value="Bewölkt">Bewölkt</option>
+    <option value="Teils bewölkt">Teils bewölkt</option>
+    <option value="Regen">Regen</option>
+    <option value="Windig">Windig</option>
+    <option value="Gewitter">Gewitter</option>
+    <option value="Nebel">Nebel</option>
+  </select>
+</div>
 
   <button class="btn btn-primary" style="margin-bottom:0;" onclick="runAdvisor()">🔍 Köder-Tipp holen</button>
   <hr class="divider">
