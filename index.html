@@ -343,6 +343,12 @@
     <datalist id="a-water-list"></datalist>
   </div>
 
+  <div class="field-group">
+    <label>🐟 Zielfisch <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+    <input type="text" id="a-fish" placeholder="Alle Fischarten durchsuchen …" list="a-fish-list">
+    <datalist id="a-fish-list"></datalist>
+  </div>
+
   <div class="row-2">
     <div class="field-group">
       <label>📅 Datum <span style="color:var(--muted);font-weight:400;">(±30 T.)</span></label>
@@ -445,6 +451,7 @@ function fillLogSuggestions() {
 function fillAdvisorWater() {
   const catches = loadCatches();
   fillDatalist('a-water-list', [...new Set(catches.map(c => c.water).filter(Boolean))]);
+  fillDatalist('a-fish-list',  [...new Set(catches.map(c => c.fish).filter(Boolean))]);
 }
 function fillDatalist(id, values) {
   const dl = document.getElementById(id);
@@ -478,13 +485,14 @@ function saveCatch() {
 // ── Advisor – OR-logic ───────────────────────────────────────────
 function runAdvisor() {
   const fWater   = document.getElementById('a-water').value.trim();
+  const fFish    = document.getElementById('a-fish').value.trim();
   const fDate    = document.getElementById('a-date').value;
   const fTemp    = document.getElementById('a-temp').value.trim();
   const fWeather = document.getElementById('a-weather').value;
   const resultEl = document.getElementById('advisor-result');
 
   // Check: at least one criterion
-  if (!fWater && !fDate && !fTemp && !fWeather) {
+  if (!fWater && !fFish && !fDate && !fTemp && !fWeather) {
     resultEl.innerHTML = `
       <div class="hint-box">
         <div class="icon">🎯</div>
@@ -502,6 +510,7 @@ function runAdvisor() {
   // Build filter summary line
   const activeFilters = [];
   if (fWater)   activeFilters.push(`📍 ${esc(fWater)}`);
+  if (fFish)    activeFilters.push(`🐟 ${esc(fFish)}`);
   if (fDate)    activeFilters.push(`📅 ${formatDate(fDate)} ±30 Tage`);
   if (fTemp)    activeFilters.push(`🌡️ ${fTemp} °C ±2°`);
   if (fWeather) activeFilters.push(`🌤️ ${esc(fWeather)}`);
@@ -511,6 +520,8 @@ function runAdvisor() {
   catches.forEach(c => {
     // Gewässer ist ein Pflichtfilter – wenn angegeben, muss es übereinstimmen
     if (fWater && (!c.water || c.water.toLowerCase() !== fWater.toLowerCase())) return;
+    // Zielfisch ist ein Pflichtfilter – wenn angegeben, muss er übereinstimmen
+    if (fFish  && (!c.fish  || c.fish.toLowerCase()  !== fFish.toLowerCase()))  return;
 
     const reasons = [];
 
