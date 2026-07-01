@@ -289,18 +289,18 @@
   </div>
 
   <div class="field-group">
-  <label>🌤️ Wetter</label>
-  <select id="f-weather">
-    <option value="">— auswählen —</option>
-    <option value="Sonnig">Sonnig</option>
-    <option value="Bewölkt">Bewölkt</option>
-    <option value="Teils bewölkt">Teils bewölkt</option>
-    <option value="Regen">Regen</option>
-    <option value="Windig">Windig</option>
-    <option value="Gewitter">Gewitter</option>
-    <option value="Nebel">Nebel</option>
-  </select>
-</div>
+    <label>🌤️ Wetter</label>
+    <select id="f-weather">
+      <option value="">— auswählen —</option>
+      <option>☀️ Sonnig</option>
+      <option>⛅ Leicht bewölkt</option>
+      <option>☁️ Bewölkt</option>
+      <option>🌧️ Regen</option>
+      <option>⛈️ Gewitter</option>
+      <option>🌫️ Neblig</option>
+      <option>❄️ Schneefall</option>
+    </select>
+  </div>
 
   <div class="field-group">
     <label>🪱 Köder</label>
@@ -378,18 +378,9 @@
   </div>
 
   <div class="field-group">
-  <label>🌤️ Wetter <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-  <select id="f-weather">
-    <option value="">Wetter auswählen...</option>
-    <option value="Sonnig">Sonnig</option>
-    <option value="Bewölkt">Bewölkt</option>
-    <option value="Teils bewölkt">Teils bewölkt</option>
-    <option value="Regen">Regen</option>
-    <option value="Windig">Windig</option>
-    <option value="Gewitter">Gewitter</option>
-    <option value="Nebel">Nebel</option>
-  </select>
-</div>
+    <label>🌤️ Wetter <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+    <input type="text" id="a-weather" placeholder="z.B. Sonnig …">
+  </div>
 
   <button class="btn btn-primary" style="margin-bottom:0;" onclick="runAdvisor()">🔍 Köder-Tipp holen</button>
   <hr class="divider">
@@ -410,10 +401,16 @@
 
 <script>
 // ── Supabase ─────────────────────────────────────────────────────
-const { createClient } = supabase;
-const db = createClient(
+const db = supabase.createClient(
   'https://vghkrblzktxzvrcqjbvc.supabase.co',
-  'sb_publishable_zCwOhYUD0_JMfowbU9yZNg_oRPiC3SK'
+  'sb_publishable_zCwOhYUD0_JMfowbU9yZNg_oRPiC3SK',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  }
 );
 
 // ── In-memory cache of all catches (loaded from DB) ──────────────
