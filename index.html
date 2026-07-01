@@ -379,7 +379,16 @@
 
   <div class="field-group">
     <label>🌤️ Wetter <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-    <input type="text" id="a-weather" placeholder="z.B. Sonnig …">
+    <select id="a-weather">
+      <option value="">— beliebiges Wetter —</option>
+      <option>☀️ Sonnig</option>
+      <option>⛅ Leicht bewölkt</option>
+      <option>☁️ Bewölkt</option>
+      <option>🌧️ Regen</option>
+      <option>⛈️ Gewitter</option>
+      <option>🌫️ Neblig</option>
+      <option>❄️ Schneefall</option>
+    </select>
   </div>
 
   <button class="btn btn-primary" style="margin-bottom:0;" onclick="runAdvisor()">🔍 Köder-Tipp holen</button>
@@ -463,7 +472,7 @@ function showTab(name, btn) {
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'list')    renderList();
-  if (name === 'advisor') fillAdvisorSuggestions();
+  if (name === 'advisor') { fillAdvisorSuggestions(); if (allCatches.length === 0) loadAndRender(); }
   if (name === 'log')     fillLogSuggestions();
 }
 
@@ -593,7 +602,7 @@ function runAdvisor() {
   const fFish    = document.getElementById('a-fish').value.trim();
   const fDate    = document.getElementById('a-date').value;
   const fTemp    = document.getElementById('a-temp').value.trim();
-  const fWeather = document.getElementById('a-weather').value.trim();
+  const fWeather = document.getElementById('a-weather').value;
   const resultEl = document.getElementById('advisor-result');
 
   if (!fWater && !fFish && !fDate && !fTemp && !fWeather) {
@@ -602,7 +611,14 @@ function runAdvisor() {
   }
 
   if (allCatches.length === 0) {
-    resultEl.innerHTML = `<div class="empty"><div class="icon">📭</div><p>Noch keine Fänge in der Datenbank.</p></div>`;
+    resultEl.innerHTML = `<div class="loading"><div class="spinner"></div>Daten werden geladen …</div>`;
+    loadAndRender().then(() => {
+      if (allCatches.length === 0) {
+        resultEl.innerHTML = `<div class="empty"><div class="icon">📭</div><p>Noch keine Fänge in der Datenbank.</p></div>`;
+      } else {
+        runAdvisor();
+      }
+    });
     return;
   }
 
@@ -627,7 +643,7 @@ function runAdvisor() {
       if (Math.abs(c.temperatur - parseFloat(fTemp)) <= 2)
         reasons.push({ type: 'temp', label: `🌡️ Gleiche Temperatur (${c.temperatur} °C)` });
     }
-    if (fWeather && c.wetter && c.wetter.toLowerCase().includes(fWeather.toLowerCase()))
+    if (fWeather && c.wetter && c.wetter === fWeather)
       reasons.push({ type: 'weather', label: '🌤️ Gleiches Wetter' });
 
     if (reasons.length > 0) results.push({ c, reasons });
