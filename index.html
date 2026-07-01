@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>🎣 TackleTime</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   :root {
     --bg:      #141f14;
@@ -409,18 +409,49 @@
 <div id="toast"></div>
 
 <script>
-// ── Supabase ─────────────────────────────────────────────────────
-const db = supabase.createClient(
-  'https://vghkrblzktxzvrcqjbvc.supabase.co',
-  'sb_publishable_zCwOhYUD0_JMfowbU9yZNg_oRPiC3SK',
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
+// ── Supabase REST (raw fetch – Safari-kompatibel) ────────────────
+const SB_URL = 'https://vghkrblzktxzvrcqjbvc.supabase.co';
+const SB_KEY = 'sb_publishable_zCwOhYUD0_JMfowbU9yZNg_oRPiC3SK';
+
+async function sbSelect() {
+  const res = await fetch(
+    SB_URL + '/rest/v1/fange?select=*&order=created_at.desc',
+    { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+  );
+  if (!res.ok) { const t = await res.text(); return { data: null, error: { message: t } }; }
+  const data = await res.json();
+  return { data, error: null };
+}
+
+async function sbInsert(row) {
+  const res = await fetch(
+    SB_URL + '/rest/v1/fange',
+    {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(row)
     }
-  }
-);
+  );
+  if (!res.ok) { const t = await res.text(); return { error: { message: t } }; }
+  return { error: null };
+}
+
+async function sbDelete(id) {
+  const res = await fetch(
+    SB_URL + '/rest/v1/fange?id=eq.' + encodeURIComponent(id),
+    {
+      method: 'DELETE',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    }
+  );
+  if (!res.ok) { const t = await res.text(); return { error: { message: t } }; }
+  return { error: null };
+}
 
 // ── In-memory cache of all catches (loaded from DB) ──────────────
 let allCatches = [];
@@ -509,10 +540,7 @@ async function loadAndRender() {
   const listEl = document.getElementById('catches-list');
   listEl.innerHTML = `<div class="loading"><div class="spinner"></div>Fänge werden geladen …</div>`;
 
-  const { data, error } = await db
-    .from('fange')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await sbSelect();
 
   if (error) {
     showToast('❌ Laden fehlgeschlagen: ' + error.message, true);
@@ -576,7 +604,7 @@ async function saveCatch() {
     anglername
   };
 
-  const { error } = await db.from('fange').insert([row]);
+  const { error } = await sbInsert(row);
 
   btn.disabled = false;
   btn.textContent = '✅ Fang speichern';
@@ -605,6 +633,9 @@ function runAdvisor() {
   const fWeather = document.getElementById('a-weather').value;
   const resultEl = document.getElementById('advisor-result');
 
+  // DEBUG: zeige ersten Datensatz um Spaltennamen zu prüfen
+  if (allCatches.length > 0) { console.log('DEBUG erster Fang:', JSON.stringify(allCatches[0])); }
+
   if (!fWater && !fFish && !fDate && !fTemp && !fWeather) {
     resultEl.innerHTML = `<div class="hint-box"><div class="icon">🎯</div><p>Gib mindestens ein Kriterium ein,<br>um dein Tackle zu bestimmen!</p></div>`;
     return;
@@ -628,6 +659,13 @@ function runAdvisor() {
   if (fDate)    activeFilters.push(`📅 ${formatDate(fDate)} ±30 Tage`);
   if (fTemp)    activeFilters.push(`🌡️ ${fTemp} °C ±2°`);
   if (fWeather) activeFilters.push(`🌤️ ${esc(fWeather)}`);
+
+  // Show raw keys of first catch in result for debugging
+  if (allCatches.length > 0) {
+    const keys = Object.keys(allCatches[0]);
+    const sample = allCatches[0];
+    resultEl.innerHTML = '<div class="filter-active"><span>🔧 Debug – Spaltennamen in DB: </span>' + keys.join(', ') + '<br><span>Beispiel-Werte: </span>' + keys.map(k => k+'='+JSON.stringify(sample[k])).join(', ') + '</div>' + resultEl.innerHTML;
+  }
 
   const results = [];
   allCatches.forEach(c => {
@@ -750,7 +788,7 @@ async function deleteCatch(id) {
   const card = document.getElementById('card-' + id);
   if (card) card.style.opacity = '0.4';
 
-  const { error } = await db.from('fange').delete().eq('id', id);
+  const { error } = await sbDelete(id);
   if (error) {
     showToast('❌ Löschen fehlgeschlagen', true);
     if (card) card.style.opacity = '1';
